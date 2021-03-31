@@ -1,4 +1,4 @@
 # BusStopProgrammingTest
 cd src/
 javac Main.java
-java Main ../input.txt
+java Main INPUT_FILE_NAME.txt
