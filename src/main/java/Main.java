@@ -8,11 +8,12 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        File input = new File("/home/savok/dualLab/tests/test3.txt");
+        File input = new File(args[0]);
+        File output = new File(input.getParent(), "output.txt");
         TimetableFileReader reader = new TimetableFileReader(input);
         Timetable timetable = reader.read();
-        for (BusTrip trip : timetable.getDailyTrips()) System.out.println(trip);
-        TimetableFileWriter writer = new TimetableFileWriter(new File(input.getParent(), "output.txt"));
+        TimetableFileWriter writer = new TimetableFileWriter(output);
         writer.write(timetable);
+        System.out.println("New timetable was generated in " + output);
     }
 }
