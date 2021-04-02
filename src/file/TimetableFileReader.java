@@ -5,15 +5,14 @@ import model.Company;
 import model.Timetable;
 
 import java.io.*;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimetableFileReader {
-    private final BufferedReader reader;
+public class TimetableFileReader implements AutoClosable {
+    private final File file;
 
-    public TimetableFileReader(File file) throws FileNotFoundException {
-        this.reader = new BufferedReader(new FileReader(file));
+    public TimetableFileReader(File file) {
+        this.file = file;
     }
 
     public Timetable read() throws IOException {
@@ -22,19 +21,32 @@ public class TimetableFileReader {
 
     private List<BusTrip> getBusTrips() throws IOException {
         List<BusTrip> trips = new ArrayList<>();
-        String line;
-        while ((line = reader.readLine()) != null)
-            trips.add(stringToBusTrip(line));
-        reader.close();
+        fillTripsList(trips);
         return trips;
     }
 
-    private BusTrip stringToBusTrip(String string) throws IOException {
-        String[] parameters = string.split(" ");
+    private void fillTripsList(List<BusTrip> tripsToFill) throws IOException {
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
         try {
-            return new BusTrip(Company.valueOf(parameters[0].toUpperCase()), parameters[1], parameters[2]);
-        } catch (ParseException e) {
-            throw new IOException("The file contains records in the wrong format.", e);
+            fileReader = new FileReader(file);
+            bufferedReader = new BufferedReader(fileReader);
+            linesToTripsList(tripsToFill, bufferedReader);
+        } finally {
+            autoClose(bufferedReader);
+            autoClose(fileReader);
         }
+    }
+
+    private void linesToTripsList(List<BusTrip> tripsToFill, BufferedReader bufferedReader) throws IOException {
+        String line;
+        while ((line = bufferedReader.readLine()) != null){
+            tripsToFill.add(stringToBusTrip(line));
+        }
+    }
+
+    private BusTrip stringToBusTrip(String string) {
+        String[] parameters = string.split(" ");
+        return new BusTrip(Company.valueOf(parameters[0].toUpperCase()), parameters[1], parameters[2]);
     }
 }

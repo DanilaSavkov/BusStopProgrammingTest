@@ -1,60 +1,75 @@
 package model;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalTime;
 
 public class BusTrip {
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("HH:mm");
     private final Company company;
-    private final Calendar departureTime;
-    private final Calendar arrivalTime;
+    private final LocalTime departureTime;
+    private final LocalTime arrivalTime;
 
-    public BusTrip(Company company, Calendar departureTime, Calendar arrivalTime) {
+    public BusTrip(Company company, LocalTime departureTime, LocalTime arrivalTime) {
         this.company = company;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        if (arrivalTime.before(departureTime)) arrivalTime.add(Calendar.DAY_OF_YEAR, 1);
     }
 
-    public BusTrip(Company company, String simpleDepartureTime, String simpleArrivalTime) throws ParseException {
+    public BusTrip(Company company, String simpleDepartureTime, String simpleArrivalTime) {
         this.company = company;
-        this.departureTime = Calendar.getInstance();
-        this.departureTime.setTime(SIMPLE_DATE_FORMAT.parse(simpleDepartureTime));
-        this.arrivalTime = Calendar.getInstance();
-        this.arrivalTime.setTime(SIMPLE_DATE_FORMAT.parse(simpleArrivalTime));
-        if (arrivalTime.before(departureTime)) arrivalTime.add(Calendar.DAY_OF_YEAR, 1);
+        this.departureTime = LocalTime.parse(simpleDepartureTime);
+        this.arrivalTime = LocalTime.parse(simpleArrivalTime);
     }
 
     public Company getCompany() {
         return company;
     }
 
-    public Calendar getDepartureTime() {
+    public LocalTime getDepartureTime() {
         return departureTime;
     }
 
+    public LocalTime getArrivalTime() {
+        return arrivalTime;
+    }
+
     public boolean isLongerThanHour() {
-        Calendar hourAfterDepartureTime = (Calendar) departureTime.clone();
-        hourAfterDepartureTime.add(Calendar.HOUR, 1);
-        return arrivalTime.after(hourAfterDepartureTime);
+        LocalTime oneHourAfterDepartureTime = departureTime.plusHours(1);
+        return arrivalTime.isAfter(oneHourAfterDepartureTime);
     }
 
     public boolean effectiveThan(BusTrip anotherBusTrip) {
+        if (anotherBusTrip.isLongerThanHour() && !this.isLongerThanHour()) return true;
         int departureComparingValue = this.departureTime.compareTo(anotherBusTrip.departureTime);
         int arrivalComparingValue = this.arrivalTime.compareTo(anotherBusTrip.arrivalTime);
+        if (onlyOneArrivesTomorrow(this, anotherBusTrip)) {
+            departureComparingValue = this.plusHour().departureTime.compareTo(anotherBusTrip.plusHour().departureTime);
+            arrivalComparingValue = this.plusHour().arrivalTime.compareTo(anotherBusTrip.plusHour().arrivalTime);
+        }
         if (departureComparingValue == 0 && arrivalComparingValue == 0)
             return this.company.getComfortRate() > anotherBusTrip.company.getComfortRate();
         else return departureComparingValue >= 0 && arrivalComparingValue <= 0;
     }
 
-    private static String getSimpleDateFormat(Date date) {
-        return SIMPLE_DATE_FORMAT.format(date);
+    private static boolean onlyOneArrivesTomorrow(BusTrip trip1, BusTrip trip2) {
+        return (trip1.isArrivesTomorrow() && !trip2.isArrivesTomorrow()) || (!trip1.isArrivesTomorrow() && trip2.isArrivesTomorrow());
+    }
+
+    private BusTrip plusHour() {
+        return new BusTrip(company, departureTime.plusHours(1), arrivalTime.plusHours(1));
+    }
+
+    private boolean isArrivesTomorrow() {
+        return departureTime.isAfter(arrivalTime);
+    }
+
+    public boolean matches(BusTrip anotherBusTrip) {
+        return !this.equals(anotherBusTrip)
+                && this.company.equals(anotherBusTrip.company)
+                && this.departureTime.equals(anotherBusTrip.departureTime)
+                && this.arrivalTime.equals(anotherBusTrip.arrivalTime);
     }
 
     @Override
     public String toString() {
-        return getCompany().getName() + " " + getSimpleDateFormat(departureTime.getTime()) + " " + getSimpleDateFormat(arrivalTime.getTime());
+        return getCompany().getName() + " " + departureTime + " " + arrivalTime;
     }
 }

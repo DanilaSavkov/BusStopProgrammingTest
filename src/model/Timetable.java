@@ -26,10 +26,11 @@ public class Timetable {
     public List<BusTrip> getIneffectiveTrips() {
         List<BusTrip> result = new ArrayList<>();
         for (BusTrip trip1 : dailyTrips) {
+//            if (trip1.isLongerThanHour() && !result.contains(trip1)) result.add(trip1);
             for (BusTrip trip2 : dailyTrips) {
                 if (trip1.effectiveThan(trip2) && !result.contains(trip2)) result.add(trip2);
+                if (trip1.matches(trip2) && !result.contains(trip2) && !result.contains(trip1)) result.add(trip2);
             }
-            if (trip1.isLongerThanHour() && !result.contains(trip1)) result.add(trip1);
         }
         return result;
     }
